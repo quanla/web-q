@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import qj.util.ReflectUtil;
 import qj.util.funct.Fs;
 import qj.util.funct.P1;
+import qj.util.lang.CompositeClassPathLoader;
 import qj.util.lang.DirClassPathClassLoader;
 
 public class ReloadabledContext {
@@ -19,20 +20,20 @@ public class ReloadabledContext {
 	private String contextClassName;
 	private String[] classpaths;
 	private Object contextO;
+	LinkedList<P1<Object>> afterCreateContext = new LinkedList<>();
 
 	public ReloadabledContext(String contextClass, String... classpaths) {
 		this.contextClassName = contextClass;
 		this.classpaths = classpaths;
 	}
 
-	LinkedList<P1<Object>> afterCreateContext = new LinkedList<P1<Object>>();
-	private void reload() {
+	public void reload() {
 		contextO = createContextObj();
 		Fs.invokeAll(afterCreateContext, contextO);
 	}
 
 	private Object createContextObj() {
-		Class<?> contextClass = new DirClassPathClassLoader(classpaths).load(contextClassName);
+		Class<?> contextClass = new CompositeClassPathLoader(classpaths).load(contextClassName);
 		return ReflectUtil.newInstance(contextClass);
 	}
 
@@ -51,14 +52,15 @@ public class ReloadabledContext {
 	}
 
 	public void invoke(final String methodName, Object... params) {
-		afterCreateContext.add(new P1<Object>() {public void e(Object obj) {
+		afterCreateContext.add(obj -> {
 			ReflectUtil.invoke(methodName, obj, params);
-		}});
+		});
 	}
+	@SuppressWarnings("UnusedDeclaration")
 	public void setField(final String fieldName, Object value) {
-		afterCreateContext.add(new P1<Object>() {public void e(Object obj) {
+		afterCreateContext.add(obj -> {
 			ReflectUtil.setFieldValue(value, fieldName, obj);
-		}});
+		});
 	}
 	
 }
