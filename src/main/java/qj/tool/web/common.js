@@ -599,6 +599,27 @@ Cols.sortBy = function(byF) {
 	};
 };
 
+Cols.index = function(col, by) {
+    if (typeof by == "string") {
+        var byAttr = by;
+        by = function(ele) { return ele[byAttr];};
+    }
+
+    return Cols.collect(col, {}, function(ele, groups) {
+        var index = by(ele);
+        var list = groups[index];
+        if (list == null) {
+            list = [];
+            groups[index] = list;
+        }
+        list.push(ele);
+        return groups;
+    });
+};
+Cols.group = function(col, by) {
+    return Cols.values(Cols.index(col, by));
+};
+
 
 
 var Async = Async || {};
@@ -1119,6 +1140,24 @@ ObjectUtil.copy = function(fromO, toO) {
 	}
 };
 ObjectUtil.clone = clone;
+ObjectUtil.clear = function(obj) {
+    for (prop in obj) {
+//        if (obj.hasOwnProperty(prop)) {
+            delete obj[prop];
+//        }
+    }
+};
+ObjectUtil.hasValue = function(o) {
+    if (o == null) {
+        return false;
+    }
+    for (var i in o) {
+        if (o.hasOwnProperty(i)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 var Http = Http || {};
 Http.afterSharp = function() {
