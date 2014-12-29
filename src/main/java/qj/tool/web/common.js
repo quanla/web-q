@@ -377,11 +377,11 @@ Cols.find = function(col, func) {
 
 
 Cols.yield = function(col, func) {
-	var ret = [];
+	var ret = Array.isArray(col) ? [] : {};
 	for (var i in col) {
 		var e = func(col[i]);
 		if (e != null) {
-			ret.push( e );
+            ret[i] = e;
 		}
 	}
 	return ret;
@@ -956,6 +956,10 @@ StringUtil.isNotEmpty = function(val) {
 };
 StringUtil.randomString = randomString;
 
+StringUtil.getLastWord = function(str) {
+    return /\b\w+$/.exec(str)[0];
+}
+
 var DateUtil = DateUtil || {};
 
 DateUtil.SECOND_LENGTH = 1000;
@@ -1040,6 +1044,9 @@ DateUtil.truncate = function(date) {
 };
 DateUtil.truncateHour = function(date) {
 	return new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), 0, 0);
+};
+DateUtil.truncateMinute = function(date) {
+	return new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), 0);
 };
 DateUtil.truncateMonth = function(date) {
 	return new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0);
@@ -1141,10 +1148,10 @@ ObjectUtil.copy = function(fromO, toO) {
 };
 ObjectUtil.clone = clone;
 ObjectUtil.clear = function(obj) {
-    for (prop in obj) {
-//        if (obj.hasOwnProperty(prop)) {
+    for (var prop in obj) {
+        if (obj.hasOwnProperty(prop)) {
             delete obj[prop];
-//        }
+        }
     }
 };
 ObjectUtil.hasValue = function(o) {
@@ -1167,6 +1174,36 @@ Http.afterSharp = function() {
 		return null;
 	}
 	return href.substring(index + 1);
+};
+
+var RegexUtil = RegexUtil || {};
+
+RegexUtil.replaceAll = function(str, exp, replace) {
+    
+    if (typeof replace == "string") {
+        var replaceStr = replace;
+        replace = function(m) {
+            return RegexUtil.replaceAll(replaceStr, "\\$(\\d+)", function(m1) {
+                return m[1*m1[1]];
+            });
+        };
+    }
+    
+    var result = "";
+
+    for (;;) {
+        var m = new RegExp(exp).exec(str);
+        if (m != null) {
+            result += str.substring(0, m.index);
+            result += replace(m);
+            str = str.substring(m.index + m[0].length);
+        } else {
+            return result + str;
+        }
+    }
+    
+    
+    
 };
 
 function clone(obj) {

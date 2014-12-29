@@ -14,6 +14,7 @@ import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.TimeZone;
+import java.util.concurrent.TimeoutException;
 
 public class ResourceFilter implements Filter {
 
@@ -91,7 +92,15 @@ public class ResourceFilter implements Filter {
 			resp.getOutputStream().write(content.getBytes(Charset.forName("UTF-8")));
 		} else {
 			ServletOutputStream out = resp.getOutputStream();
-			IOUtil.connect(file.getInputStream(), out);
+			try {
+				IOUtil.connect(file.getInputStream(), out);
+			} catch (IOException e) {
+				if (e.getCause() != null && e.getCause() instanceof TimeoutException) {
+					;
+				} else {
+					throw e;
+				}
+			}
 		}
 	}
 	

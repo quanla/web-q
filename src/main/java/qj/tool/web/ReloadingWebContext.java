@@ -2,6 +2,7 @@ package qj.tool.web;
 
 import qj.util.funct.F0;
 import qj.util.funct.F1;
+import qj.util.funct.P0;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
