@@ -22,7 +22,7 @@ function addCommas(str) {
 	if (typeof str == "string") {
 		str = parseFloat(str);
 	}
-	
+
 	if (str % 1 != 0) {
 		str = str.toFixed(2);
 	}
@@ -190,7 +190,7 @@ function postJson(url, values, onSuccess, onError) {
 	} else if (onError) {
 		checking(onError);
 	}
-	
+
 	var customizedOnError = function(errorThrown) {
 		if (onError==null) {
 			;
@@ -229,7 +229,7 @@ function getJson(url, onSuccess, onError) {
 	} else if (onError) {
 		checking(onError);
 	}
-	
+
 	var customizedOnError = function(errorThrown) {
 		if (onError==null) {
 			;
@@ -281,7 +281,7 @@ function trim(val) {
 	if (!val) {
 		return null;
 	}
-	
+
 	return val.replace(/^\s+/, "").replace(/\s+$/, "");
 }
 
@@ -325,7 +325,7 @@ Fs.cache = function(f0) {
 			cachedData = f0();
 			invoked = true;
 		}
-		
+
 		return cachedData;
 	};
 };
@@ -416,7 +416,7 @@ Cols.merge = function(map1, map2) {
 //}
 
 Cols.eachLine = function(/*final List<F>*/ steps, /*final P2<F,P1<N>>*/ digF, /*final List<N>*/ collecteds, /*final P1<List<N>>*/ resultF) {
-	
+
 	if (steps.length == 0) {
 		resultF(collecteds);
 		return;
@@ -467,7 +467,7 @@ Cols.eachPar1 = function(index, col, p2) {
 	if (index >= col.length) {
 		return;
 	}
-	
+
 	p2(col[index], function() {
 		Cols.eachPar1(index+1, col, p2);
 	});
@@ -485,7 +485,7 @@ Cols.indexOf = function(ele, col, colExtract) {
 
 Cols.copy = function(arr1) {
 	var ret = [];
-	
+
 	for (var i in arr1) {
 		ret.push(arr1[i]);
 	}
@@ -567,7 +567,7 @@ Cols.removeAll = function(col, list) {
 	for (var i in col) {
 		var item = col[i];
 		var rowI = list.indexOf(item);
-		
+
 		if (rowI == -1) {
 //			alert("Can not find");
 			return;
@@ -643,7 +643,7 @@ Async.oneRun = function() {
 		}
 		var lastRun = [true];
 		lastRunRef[0] = lastRun;
-		
+
 		return function() {
 			var r = lastRun[0];
 			lastRun[0] = false;
@@ -682,13 +682,13 @@ Async.runWhenAllChecked = function(checkCount, func) {
 	}
 	return function(chechIndex) {
 		flags[chechIndex] = true;
-		
+
 		for (var i=0;i<checkCount;i++) {
 			if (flags[i] == false) {
 				return;
 			}
 		}
-		
+
 		func();
 	}
 };
@@ -696,7 +696,7 @@ Async.runWhenAllChecked = function(checkCount, func) {
 Async.runAfterCount= function(checkCount, func) {
 	return function(chechIndex) {
 		checkCount --;
-		
+
 		if (checkCount <= 0) {
 			func();
 		}
@@ -716,7 +716,7 @@ Async.incrementalRepeater = function(func) {
 			return array[Math.min(parseInt(i / 10), array.length-1)];
 		}
 	};
-	
+
 	var createRunner = function() {
 
 		var sleepTimeF = Cols.toEnd([400, 300, 300, 300, 200, 200, 100]);
@@ -735,7 +735,7 @@ Async.incrementalRepeater = function(func) {
 			setTimeout(run, sleepTimeF());
 		};
 		run();
-		
+
 		return {
 			stop: function() {
 				alive = false;
@@ -782,7 +782,7 @@ Async.lazyValidate = function(startF, checkF) {
 		var stillValid = function() {
 			return thisValidate[0] != null;
 		};
-		
+
 		startF();
 		setTimeout(function() {
 			if (!stillValid()) {
@@ -823,26 +823,26 @@ function numberInput(input, options) {
 		input.otherOnchange = func;
 	};
 	input.jQueryOnChange(onChange);
-	
-	
+
+
 	input.click(function() {input.select()});
 
 	var stepValue = options && options.step ? options.step : 1;
 	input.keydown(function(event) {
 		if (event.keyCode == 38) { // Up
 			var newVal = input.val().toString().replace(/,/g,'')*1 + stepValue;
-			
+
 			if (options && options.max != null && newVal > options.max()) {return;}
 			input.val(newVal);
-			
+
 			onChange();
 		} else if (event.keyCode == 40) { // Down
 			var newVal = input.val().toString().replace(/,/g,'')*1 - stepValue;
-			
+
 			if (options && options.min != null && newVal < options.min) {
 				return;
 			}
-			
+
 			input.val(newVal);
 
 			onChange();
@@ -868,7 +868,7 @@ function onEnter(input, func) {
 
 function onAlt(key, input, func) {
 	input.keypress(function(e) {
-		
+
 		if(e.altKey===true && e.which == key) {
 			e.preventDefault();
 			func();
@@ -1026,7 +1026,7 @@ DateUtil.dayOfWeek = function(day) {
 	if (day == 0) {
 		return "Chủ nhật";
 	}
-	return "Thứ " + (day+1); 
+	return "Thứ " + (day+1);
 };
 
 DateUtil.isToday = function(date) {
@@ -1054,7 +1054,7 @@ DateUtil.truncateMonth = function(date) {
 
 DateUtil.weekBegin = function(date) {
 	var dow = date.getDay();
-	
+
 	return new Date(date.getFullYear(), date.getMonth(), date.getDate() - dow, 0, 0, 0);
 };
 
@@ -1063,7 +1063,7 @@ var TimingUtil = TimingUtil || {};
 
 TimingUtil.syncDelay = function (f, delay) {
 	delay = delay || 1000;
-	
+
 	var globalInterrupted = null;
 	return function() {
 		if (globalInterrupted) {
@@ -1110,23 +1110,23 @@ ObjectUtil.equals = function (o1, o2) {
 	if (o1 == null) {
 		return o2 == null;
 	}
-	
+
 	if (o2 == null) {
 		return false;
 	}
-	
+
 	if ((typeof o1) != (typeof o2)) {
 		return false;
 	}
-	
+
 	if (typeof o1 != "object") {
 		return o1 == o2;
 	}
-	
+
 	if (o1.length != o2.length) {
 		return false;
 	}
-	
+
 	for (var i in o1) {
 		if (!ObjectUtil.equals(o1[i], o2[i])) {
 			return false;

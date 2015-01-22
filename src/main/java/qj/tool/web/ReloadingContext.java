@@ -2,7 +2,9 @@ package qj.tool.web;
 
 import java.lang.reflect.Field;
 import java.util.LinkedList;
+import java.util.Map;
 
+import qj.util.BeanUtil;
 import qj.util.ReflectUtil;
 import qj.util.funct.F0;
 import qj.util.funct.Fs;
@@ -67,12 +69,20 @@ public class ReloadingContext {
 		afterCreateContext.add(obj -> ReflectUtil.setFieldValue(value, fieldName, obj));
 	}
 
-	public <A> A get(String fieldName) {
+	public <A> A get(String fieldNames) {
 		if (contextO == null) {
 			reload();
 		}
-		Field field = ReflectUtil.getField(fieldName, contextO.getClass());
-		return ReflectUtil.getFieldValue(field, contextO);
+		return BeanUtil.get(fieldNames, contextO);
+	}
+
+	private static <A> A get1(String fieldName, Object o) {
+		if (o instanceof Map) {
+			return (A) ((Map) o).get(fieldName);
+		} else {
+			Field field = ReflectUtil.getField(fieldName, o.getClass());
+			return ReflectUtil.getFieldValue(field, o);
+		}
 	}
 
 	public void initWith(P0 afterCreateContext) {
