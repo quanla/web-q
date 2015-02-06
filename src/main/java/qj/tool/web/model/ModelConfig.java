@@ -31,7 +31,7 @@ public class ModelConfig<M> {
 		this.writeRequiredRight = requiredRight;
 	}
 	
-	class Action {
+	static class Action<M> {
 		P1<M> p1;
 		F2<HttpServletRequest, M,Boolean> authenticate;
 
