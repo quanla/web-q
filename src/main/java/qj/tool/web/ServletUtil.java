@@ -19,15 +19,19 @@ public class ServletUtil {
     public static void proxy(HttpServletRequest req, HttpServletResponse resp, String host, int port) throws IOException {
 
 
-        HttpURLConnection conn = (HttpURLConnection) new URL("http://"+ host+ ":" + port + req.getRequestURI()).openConnection();
+        HttpURLConnection conn = (HttpURLConnection) new URL("http://"+ host+ ":" + port + req.getRequestURI() + (req.getQueryString() == null ? "" : "?" + req.getQueryString())).openConnection();
         conn.setRequestMethod(req.getMethod());
         Enumeration<String> names = req.getHeaderNames();
         while (names.hasMoreElements()) {
             String hName =  names.nextElement();
 
-            conn.addRequestProperty(hName, req.getHeader(hName));
+            if (!hName.equalsIgnoreCase("HOST")) {
+                conn.addRequestProperty(hName, req.getHeader(hName));
+            } else {
+                conn.addRequestProperty("Host", host + ":" + port);
+            }
         }
-        if (req.getMethod().equalsIgnoreCase("POST")) {
+        if (!req.getMethod().equalsIgnoreCase("GET")) {
             conn.setDoOutput(true);
             IOUtil.connect(req.getInputStream(), conn.getOutputStream());
         }
