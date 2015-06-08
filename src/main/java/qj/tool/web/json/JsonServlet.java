@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 
 public class JsonServlet extends HttpServlet {
     LinkedList<JsonAction> actions = new LinkedList<>();
-    HashMap<Class<?>,F0<Douce<?,P0>>> resources = new HashMap<>();
+    HashMap<Class<?>,F1<HttpServletRequest,Douce<?,P0>>> resources = new HashMap<>();
 
     public void addAction(JsonAction action) {
         actions.add(action);
@@ -34,8 +34,9 @@ public class JsonServlet extends HttpServlet {
         resp.addHeader("Access-Control-Allow-Origin", "*");
 
         if (Objects.equals(req.getMethod(), "OPTIONS")) {
-            resp.addHeader("Access-Control-Allow-Headers", "origin, content-type, accept");
+            resp.addHeader("Access-Control-Allow-Headers", "origin, content-type, accept, authen-type, Authen-Id, Authen-Username, Authen-Email");
             resp.addHeader("Access-Control-Allow-Credentials", "true");
+            resp.addHeader("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE");
             return;
         }
 
@@ -81,16 +82,16 @@ public class JsonServlet extends HttpServlet {
     }
 
     private Douce<?,P0> createParam(HttpServletRequest req, Gson gson, Class<?> requestParam) throws IOException {
-        F0<Douce<?, P0>> resource = resources.get(requestParam);
+        F1<HttpServletRequest, Douce<?, P0>> resource = resources.get(requestParam);
         if (resource != null) {
-            return resource.e();
+            return resource.e(req);
         }
         return new Douce<>(gson.fromJson(new InputStreamReader(req.getInputStream()), requestParam), null);
     }
 
     @SuppressWarnings("unchecked")
-    public <R> void prepareResource(Class<R> clazz, F0<Douce<R,P0>> createResource) {
-        F0 createResource1 = createResource;
+    public <R> void prepareResource(Class<R> clazz, F1<HttpServletRequest, Douce<R,P0>> createResource) {
+        F1 createResource1 = createResource;
         resources.put(clazz, createResource1);
     }
 
