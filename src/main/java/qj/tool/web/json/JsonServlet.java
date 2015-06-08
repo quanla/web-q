@@ -99,6 +99,8 @@ public class JsonServlet extends HttpServlet {
             String url = ((Url) clazz.getAnnotation(Url.class)).value();
             String method = clazz.getAnnotation(Post.class) != null ? "POST" :
                     clazz.getAnnotation(Get.class) != null ? "GET" :
+                    clazz.getAnnotation(Put.class) != null ? "PUT" :
+                    clazz.getAnnotation(Delete.class) != null ? "DELETE" :
                             null;
 
 
@@ -108,6 +110,8 @@ public class JsonServlet extends HttpServlet {
                 ReflectUtil.eachMethod(clazz, (m) -> {
                     String httpMethod = m.getAnnotation(Post.class) != null ? "POST" :
                             m.getAnnotation(Get.class) != null ? "GET" :
+                            m.getAnnotation(Put.class) != null ? "PUT" :
+                            m.getAnnotation(Delete.class) != null ? "DELETE" :
                                     null;
 
                     if (httpMethod != null) {
