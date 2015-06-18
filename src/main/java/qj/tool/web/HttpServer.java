@@ -1,10 +1,12 @@
 package qj.tool.web;
 
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import qj.util.funct.P0;
 
+import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -13,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 
 /**
  * Created by Quan on 20/03/2015.
@@ -20,12 +23,14 @@ import java.util.Comparator;
 public class HttpServer {
 
 	BatchServlet batchServlet = new BatchServlet();
+	ServletContextHandler servletContext = new ServletContextHandler(ServletContextHandler.SESSIONS);
+	{
+		servletContext.setContextPath("/");
+	}
 
 	public P0 start(int port) throws Exception {
 		final Server server = new Server(port);
 
-		ServletContextHandler servletContext = new ServletContextHandler(ServletContextHandler.SESSIONS);
-		servletContext.setContextPath("/");
 		server.setHandler(servletContext);
 
 		servletContext.addServlet(new ServletHolder(batchServlet), "/");
@@ -46,6 +51,27 @@ public class HttpServer {
 		return this;
 	}
 
+	public HttpServer setResourceRoot(String resourceRoot) {
+
+		ResourceFilter resourceFilter = resourceFilter(resourceRoot);
+		servletContext.addFilter(
+				new FilterHolder(resourceFilter),
+				"/*", EnumSet.<DispatcherType>of(DispatcherType.REQUEST));
+		return this;
+	}
+
+	public static ResourceFilter resourceFilter(String resourceRoot) {
+		return new ResourceFilter(true,
+				req -> {
+//					if (!version.equals(req.getParameter("version"))) {
+//						return "?version=" + version;
+//					}
+					return null;
+				},
+				resourceRoot
+				);
+	}
+
 	public static class BatchServlet extends HttpServlet {
 		ArrayList<H> servlets = new ArrayList<>();
 		void addServlet(String url, HttpServlet servlet) {
@@ -55,7 +81,7 @@ public class HttpServer {
 					return -1 * (o1.url.length() - o2.url.length());
 				}
 			});
-			System.out.println(servlets);
+//			System.out.println(servlets);
 		}
 
 		@Override

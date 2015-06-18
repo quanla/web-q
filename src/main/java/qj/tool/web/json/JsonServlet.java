@@ -1,22 +1,21 @@
 package qj.tool.web.json;
 
 
-import com.google.gson.Gson;
-import qj.util.Cols;
-import qj.util.LangUtil;
-import qj.util.ReflectUtil;
-import qj.util.RegexUtil;
+import com.google.gson.*;
+import qj.util.*;
 import qj.util.funct.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,6 +23,34 @@ import java.util.regex.Pattern;
 public class JsonServlet extends HttpServlet {
     LinkedList<JsonAction> actions = new LinkedList<>();
     HashMap<Class<?>,F1<HttpServletRequest,Douce<?,P0>>> resources = new HashMap<>();
+
+    {
+        prepareResource(HttpServletRequest.class, (req) -> new Douce<>(req, null));
+        prepareResource(HttpSession.class, (req) -> new Douce<>(req.getSession(false), null));
+    }
+
+
+    static Gson gson;
+    static GsonBuilder gsonBuilder = new GsonBuilder();
+    static {
+        registerTypeSerializer(Date.class, new F1<Date,String>() {public String e(Date date) {
+            return DateUtil.format(date, "yyyy-MM-dd'T'HH:mm:ss.S'Z'", TimeZone.getTimeZone("UTC"));
+        }}, new F1<String,Date>() {public Date e(String obj) {
+            return DateUtil.parse(obj, "yyyy-MM-dd'T'HH:mm:ss.S'Z'", TimeZone.getTimeZone("UTC"));
+        }});
+
+        gson = gsonBuilder.create();
+    }
+    public static <T> void registerTypeSerializer(Class<T> clazz, final F1<T,String> serializeF, final F1<String,T> deserializeF) {
+        gsonBuilder.registerTypeAdapter(clazz, new JsonSerializer<T>() {public JsonElement serialize(T src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(serializeF.e(src));
+        }});
+        gsonBuilder.registerTypeAdapter(clazz, new JsonDeserializer<T>() {public T deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+                throws JsonParseException {
+            return deserializeF.e(json.getAsJsonPrimitive().getAsString());
+        }});
+    }
+
 
     public void addAction(JsonAction action) {
         actions.add(action);
@@ -45,8 +72,6 @@ public class JsonServlet extends HttpServlet {
         for (JsonAction action : actions) {
             Map<String,String> matchedUrlParams;
             if (Objects.equals(action.method, method) && (matchedUrlParams = action.url.matchUrlParams(requestURI)) != null) {
-                Gson gson = new Gson();
-
                 LinkedList<P0> afterExec = new LinkedList<>();
                 ArrayList<Object> params = new ArrayList<>();
                 for (JsonAction.RequestParam requestParam : action.requestParams) {
@@ -57,15 +82,18 @@ public class JsonServlet extends HttpServlet {
                     }
                     params.add(param.get1());
                 }
-                Object ret = action.exec.e(params.toArray());
 
-                Fs.invokeAll(afterExec);
+                try {
+                    Object ret = action.exec.e(params.toArray());
 
-                if (ret != null) {
-                    resp.addHeader("Content-Type", "application/json");
-                    PrintWriter writer = resp.getWriter();
-                    gson.toJson(ret, writer);
-                    writer.flush();
+                    if (ret != null) {
+                        resp.addHeader("Content-Type", "application/json");
+                        PrintWriter writer = resp.getWriter();
+                        gson.toJson(ret, writer);
+                        writer.flush();
+                    }
+                } finally {
+                    Fs.invokeAll(afterExec);
                 }
                 return;
             }
@@ -95,38 +123,37 @@ public class JsonServlet extends HttpServlet {
         resources.put(clazz, createResource1);
     }
 
-    public static void resolveActions(String pkg, ClassLoader cl, P1<JsonAction> p) {
-        LangUtil.eachClass(pkg, cl, (clazz) -> {
-            String url = ((Url) clazz.getAnnotation(Url.class)).value();
-            String method = clazz.getAnnotation(Post.class) != null ? "POST" :
-                    clazz.getAnnotation(Get.class) != null ? "GET" :
-                    clazz.getAnnotation(Put.class) != null ? "PUT" :
-                    clazz.getAnnotation(Delete.class) != null ? "DELETE" :
-                            null;
+    public static void resolveActions(Class clazz, P1<JsonAction> p) {
+        Url urlAnno = (Url) clazz.getAnnotation(Url.class);
+        String url = urlAnno == null ? null : urlAnno.value();
+        String method = clazz.getAnnotation(Post.class) != null ? "POST" :
+                clazz.getAnnotation(Get.class) != null ? "GET" :
+                clazz.getAnnotation(Put.class) != null ? "PUT" :
+                clazz.getAnnotation(Delete.class) != null ? "DELETE" :
+                        null;
 
+        if (method != null) {
+            p.e(createAction(ReflectUtil.getMethod("exec", clazz), clazz, url, method));
+        } else {
+            ReflectUtil.eachMethod(clazz, (m) -> {
+                String httpMethod = m.getAnnotation(Post.class) != null ? "POST" :
+                        m.getAnnotation(Get.class) != null ? "GET" :
+                        m.getAnnotation(Put.class) != null ? "PUT" :
+                        m.getAnnotation(Delete.class) != null ? "DELETE" :
+                                null;
 
-            if (method != null) {
-                p.e(createAction(ReflectUtil.getMethod("exec", clazz), clazz, url, method));
-            } else {
-                ReflectUtil.eachMethod(clazz, (m) -> {
-                    String httpMethod = m.getAnnotation(Post.class) != null ? "POST" :
-                            m.getAnnotation(Get.class) != null ? "GET" :
-                            m.getAnnotation(Put.class) != null ? "PUT" :
-                            m.getAnnotation(Delete.class) != null ? "DELETE" :
-                                    null;
-
-                    if (httpMethod != null) {
-                        p.e(createAction(m, clazz, url, httpMethod));
-                    }
-                    return false;
-                });
-            }
-        });
+                if (httpMethod != null) {
+                    p.e(createAction(m, clazz, url, httpMethod));
+                }
+                return false;
+            });
+        }
     }
 
-    private static JsonAction createAction(Method m, Class clazz, String url, String method) {
+    private static JsonAction createAction(Method m, Class clazz, String classUrl, String method) {
         JsonAction jsonAction = new JsonAction();
-        jsonAction.url = parseUrlPattern(url);
+        Url urlAnno = (Url) m.getAnnotation(Url.class);
+        jsonAction.url = parseUrlPattern(urlAnno == null ? classUrl : urlAnno.value());
         jsonAction.method = method;
 
 
