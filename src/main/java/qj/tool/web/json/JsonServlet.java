@@ -2,6 +2,7 @@ package qj.tool.web.json;
 
 
 import com.google.gson.*;
+import qj.ui.DesktopUI4;
 import qj.util.*;
 import qj.util.funct.*;
 
@@ -13,6 +14,7 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -87,7 +89,8 @@ public class JsonServlet extends HttpServlet {
                     Object ret = action.exec.e(params.toArray());
 
                     if (ret != null) {
-                        resp.addHeader("Content-Type", "application/json");
+                        resp.setContentType("application/json");
+                        resp.setCharacterEncoding("UTF-8");
                         PrintWriter writer = resp.getWriter();
                         gson.toJson(ret, writer);
                         writer.flush();
