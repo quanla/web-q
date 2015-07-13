@@ -1,12 +1,10 @@
 package qj.tool.web.servlet;
 
+import qj.util.Cols;
 import qj.util.FileUtil;
 import qj.util.RegexUtil;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 
 /**
@@ -56,5 +54,18 @@ public class BundleFile {
         });
 
         return bundles;
+    }
+
+    public void updateJsBundle(String jsVarName, String rootDir, String jsDir) {
+        String content = FileUtil.readFileToString(path);
+
+        String lineBreak = "\r\n                ";
+        String lines = lineBreak + "\"" + Cols.join(Cols.yield(JsCollector.collectJsFiles(jsDir, rootDir, null), jsFile -> "~" + jsFile), "\"," + lineBreak + "\"") + "\"" + lineBreak;
+
+
+        String newContent = content.replaceAll(jsVarName + "\\.Include\\(([^)]+?)\\);", jsVarName + ".Include(" + lines + ");");
+
+        FileUtil.writeToFile(newContent, path);
+
     }
 }

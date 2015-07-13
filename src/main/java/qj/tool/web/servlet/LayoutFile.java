@@ -78,12 +78,20 @@ public class LayoutFile {
     }
 
     public LayoutFile setBundleFile(String path) {
+        return setBundleFile(path, null, null);
+    }
+
+    public LayoutFile setBundleFile(String path, String spaVarName, String spaDir) {
 
         layoutChangers.add((content) -> {
             BundleFile bundleFile = new BundleFile(path);
             bundleFile.scan();
             if (this.spaDir != null) {
-                verifyJsBundle(this.spaDir, bundleFile.jsBundles, path);
+                if (spaVarName == null) {
+                    verifyJsBundle(this.spaDir, bundleFile.jsBundles, path);
+                } else {
+                    bundleFile.updateJsBundle(spaVarName, parent.resourceRoot, spaDir);
+                }
             }
             for (Map.Entry<String, List<String>> css : bundleFile.cssBundles.entrySet()) {
                 content = Bundles.serveCss(content, css.getKey(), css.getValue());
