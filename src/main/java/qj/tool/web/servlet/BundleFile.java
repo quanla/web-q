@@ -33,27 +33,43 @@ public class BundleFile {
     private Map<String, List<String>> extract(String content, String type) {
         Map<String, List<String>> bundles = new HashMap<>();
 
-        // Css bundle:
+        extractDeclarationType1(content, type, bundles);
+        extractDeclarationType2(content, type, bundles);
+
+        return bundles;
+    }
+
+    private void extractDeclarationType1(String content, String type, Map<String, List<String>> bundles) {
         RegexUtil.each("var (.+?) = new " + type + "\\(\"(.+?)\"\\);", content, (matcher) -> {
             String bundleVarName = matcher.group(1);
             String bundleName = matcher.group(2);
 
-//            System.out.println("bundleName=" + bundleName + ", bundleVarName=" + bundleVarName);
-
-//            Matcher m2 = RegexUtil.matcher(bundleVarName + "\\.Include\\(((?:.|\r?\n)+?)\\);", content);
             Matcher m2 = RegexUtil.matcher(bundleVarName + "\\.Include\\(([^)]+?)\\);", content);
             m2.find();
             String dec = m2.group(1);
             LinkedList<String> list = new LinkedList<>();
-            RegexUtil.each("\"(.+?)\"", dec, (m3) -> {
+            RegexUtil.each("(?m)^\\s+\"(.+?)\"", dec, (m3) -> {
                 list.add(m3.group(1).replaceFirst("^~/", ""));
             });
 
             bundles.put(bundleName, list);
 //            System.out.println(list);
         });
+    }
 
-        return bundles;
+    private void extractDeclarationType2(String content, String type, Map<String, List<String>> bundles) {
+        RegexUtil.each("(?s)bundles\\.Add\\(new " + type + "\\(\"(.+?)\"\\)(.+?)\\);", content, (matcher) -> {
+            String bundleName = matcher.group(1);
+            String includes = matcher.group(2);
+            System.out.println(includes);
+
+            LinkedList<String> list = new LinkedList<>();
+            RegexUtil.each("\\.Include\\(\"~/([^\"]+)\"\\)", includes, (m3) -> {
+                list.add(m3.group(1));
+            });
+
+            bundles.put(bundleName, list);
+        });
     }
 
     public void updateJsBundle(String jsVarName, String rootDir, String jsDir) {
