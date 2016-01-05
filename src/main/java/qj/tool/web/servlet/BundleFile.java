@@ -61,8 +61,6 @@ public class BundleFile {
         RegexUtil.each("(?s)bundles\\.Add\\(new " + type + "\\(\"(.+?)\"\\)(.+?)\\);", content, (matcher) -> {
             String bundleName = matcher.group(1);
             String includes = matcher.group(2);
-            System.out.println(includes);
-
             LinkedList<String> list = new LinkedList<>();
             RegexUtil.each("\\.Include\\(\"~/([^\"]+)\"\\)", includes, (m3) -> {
                 list.add(m3.group(1));
